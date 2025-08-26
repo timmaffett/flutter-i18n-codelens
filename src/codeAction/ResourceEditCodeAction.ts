@@ -17,7 +17,13 @@ export class ResourceEditCodeAction implements vscode.CodeActionProvider {
 		if (isResourceFile) {
 			key = SettingUtils.getResourceLineMatch(line.text)?.groups?.key;
 		} else if (isCodeFile) {
-			const keyRange = document.getWordRangeAtPosition(range.start, SettingUtils.getResourceCodeRegex());
+			let keyRange: vscode.Range | undefined;
+			for (const regex of SettingUtils.getResourceCodeRegex()) {
+				keyRange = document.getWordRangeAtPosition(range.start, regex);
+				if (keyRange) {
+					break;
+				}
+			}
 			key = keyRange && document.getText(keyRange);
 		}
 		if (!key) return;

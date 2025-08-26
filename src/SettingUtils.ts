@@ -24,16 +24,16 @@ export default class SettingUtils implements vscode.Disposable {
 
 	private globPattern!: string;
 	private mm!: IMinimatch;
-	private codeRegex!: RegExp;
+	private codeRegex: RegExp[] = [];
 	private resourceDefinitionLocations = new Map<string, vscode.Location[]>();
 	private languageResourcesFilesCache: ResourceItem[] = [];
 	private initialLoadDone: boolean;
 	private resourceLineRegex = /(?<=["'])(?<key>[\w\d\- _.]+?)(?=["'])/g;
-	private codeFileRegex = /^(.(?!.*node_modules))*\.(jsx?|tsx?)$/;
+	private codeFileRegex = /^(.(?!.*node_modules))*\.(dart?|jsx?|tsx?)$/;
 	private gitIgnore!: ignore.Ignore;
 
-	public static readonly fireDebouncedOnDidChangeResourceLocations = debounce((...args) => SettingUtils._onDidChangeResourceLocations.fire(...args), 500);
-	public static readonly fireDebouncedOnDidChangeResource = debounce((...args) => SettingUtils._onDidChangeResource.fire(...args), 500);
+	public static readonly fireDebouncedOnDidChangeResourceLocations = debounce((...args) => SettingUtils._onDidChangeResourceLocations.fire(args[0]), 500);
+	public static readonly fireDebouncedOnDidChangeResource = debounce((...args) => SettingUtils._onDidChangeResource.fire(args[0]), 500);
 
 
 	public static readonly onDidChangeResourceLocations = this._onDidChangeResourceLocations.event;
@@ -89,7 +89,7 @@ export default class SettingUtils implements vscode.Disposable {
 
 	public async initialize() {
 		try {
-			Logger.info("i18n CodeLens initializing...");
+			Logger.info("Flutter i18n CodeLens initializing...");
 			this.initialLoadDone = false;
 
 			this.loadGitignore();
@@ -137,7 +137,7 @@ export default class SettingUtils implements vscode.Disposable {
 						await this.refreshResourceFromFiles(true);
 						await this.findAllResourceReferencesFromJson();
 						isChanged = true;
-					} else if (e.affectsConfiguration(settings.resourceRegex)) {
+					} else if (e.affectsConfiguration(settings.resourceCodeDetectRegex)) {
 						Logger.info("Resource regex configuration changed, refreshing...");
 						this.refreshRegexFromConfig();
 						await this.findAllResourceReferencesFromCodeFiles();
@@ -175,27 +175,41 @@ export default class SettingUtils implements vscode.Disposable {
 	}
 
 	private refreshRegexFromConfig = () => {
+		this.codeRegex = [];
 		try {
-			const rx = vscode.workspace.getConfiguration(extensionName).get(settings.resourceRegex, "");
-			Logger.info(`Setting resource regex: ${rx}`);
-			this.codeRegex = new RegExp(rx, "g");
-
+			Logger.info(`Getting resourceCodeDetectionRegex settings`);
+			const regExList = new Set<string>(vscode.workspace.getConfiguration(extensionName).get<string[]>(settings.resourceCodeDetectRegex)!);
+			this.codeRegex = [];
+			if (regExList.size > 0) {
+				regExList.forEach((regex) => {
+					this.codeRegex.push(new RegExp(regex, "g"));
+					Logger.info(`Adding code matching regex [${this.codeRegex.length}]: ${regex}`);
+				});
+			} else {
+				Logger.warn("No resource regex patterns found, using defaults.");
+			}
 		} catch (error) {
 			Logger.error("ERROR refreshing regex from config:", error);
-			// Use default regex on error
-			this.codeRegex = /(?<=\/\*\*\s*?@i18n\s*?\*\/\s*?["']|\W[tT]\(\s*["'])(?<key>[A-Za-z0-9 .-]+?)(?=["'])/g;
 			vscode.window.showWarningMessage("Failed to load regex config, using default.");
+		}
+		if(this.codeRegex.length === 0) {
+			// Use default regex on error
+			this.codeRegex = [
+				/\b[Tt][Rr]\s*\(\s*["'](?<key>[À-ÖØ-öø-ÿA-Za-z0-9{}!\\#$%^&*()\-_=+;:/?.>,<`~ .-]+?)["']/g,
+				/(?<=["'])(?<key>[À-ÖØ-öø-ÿA-Za-z0-9{}!\\#$%^&*()\-_=+;:/?.>,<`~ .-]+?)(?=["']\.i18n)/g,
+				/(?<=["'])(?<key>[À-ÖØ-öø-ÿA-Za-z0-9{}!\\#$%^&*()\-_=+;:/?.>,<`~ .-]+?)(?=["']\.tr)/g,
+			];
 		}
 	}
 	private refreshCodeFileRegexFromConfig() {
 		try {
-			const configValue = vscode.workspace.getConfiguration(extensionName).get(settings.codeFileRegex, "\\.(jsx?|tsx?)$");
+			const configValue = vscode.workspace.getConfiguration(extensionName).get(settings.codeFileRegex, "\\.(dart?|jsx?|tsx?)$");
 			Logger.info(`Setting code file regex: ${configValue}`);
 			this.codeFileRegex = new RegExp(configValue);
 		} catch (error) {
 			Logger.error("ERROR refreshing code file regex from config:", error);
 			// Use default regex on error
-			this.codeFileRegex = /\.(jsx?|tsx?)$/;
+			this.codeFileRegex = /\.(dart?|jsx?|tsx?)$/;
 			vscode.window.showWarningMessage("Failed to load code file regex config, using default.");
 		}
 	}
@@ -338,10 +352,10 @@ export default class SettingUtils implements vscode.Disposable {
 			await this.findAllResourceReferencesFromCodeFiles();
 
 			Logger.info("Setting up code file watchers...");
-			const watcher = vscode.workspace.createFileSystemWatcher("**/*.{ts,tsx,js,jsx}");
+			const watcher = vscode.workspace.createFileSystemWatcher("**/*.{dart,ts,tsx,js,jsx}");
 			const watcherHandler = (type: string) => async (e: vscode.Uri) => {
 				try {
-					if (/^(.(?!.*node_modules))*\.(jsx?|tsx?)$/.test(e.fsPath)) {
+					if (/^(.(?!.*node_modules))*\.(dart?|jsx?|tsx?)$/.test(e.fsPath)) {
 						const fileName = path.basename(e.fsPath);
 						Logger.info(`Code file '${fileName}' was affected by '${type}' event`);
 
@@ -385,7 +399,7 @@ export default class SettingUtils implements vscode.Disposable {
 	}
 
 	private async findAllResourceReferencesFromCodeFiles() {
-		const allFiles = await vscode.workspace.findFiles("**/*.{ts,tsx,js,jsx}", excludePattern);
+		const allFiles = await vscode.workspace.findFiles("**/*.{dart,ts,tsx,js,jsx}", excludePattern);
 		const root = vscode.workspace.workspaceFolders![0].uri.fsPath;
 
 		const codeFiles = allFiles.filter(uri => {
@@ -400,32 +414,34 @@ export default class SettingUtils implements vscode.Disposable {
 		try {
 			const text = (await vscode.workspace.fs.readFile(fileUri)).toString();
 			const lines = text.split(/\r?\n/);
-			const regex = SettingUtils.getResourceCodeRegex();
+			//OBSOLETE//const regex = SettingUtils.getResourceCodeRegex();
 			let totalFound = 0;
 
-			for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
-				const line = lines[lineNumber];
-				let match: RegExpExecArray | null;
-				while ((match = regex.exec(line)) !== null) {
-					const key = match.groups?.key ?? match[0];
-					const start = match.index!;
-					const end = start + key.length;
+			// Loop over all the resource code detection regex's in the list
+			for (const resourceCodeDetectRegex of SettingUtils.getResourceCodeRegex()) {
+				for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
+					const line = lines[lineNumber];
+					let match: RegExpExecArray | null;
+					while ((match = resourceCodeDetectRegex.exec(line)) !== null) {
+						const key = match.groups?.key ?? match[0];
+						const start = match.index!;
+						const end = start + key.length;
 
-					const locs = this.resourceDefinitionLocations.get(key) || [];
-					locs.push(new vscode.Location(
-						fileUri,
-						new vscode.Range(
-							new vscode.Position(lineNumber, start),
-							new vscode.Position(lineNumber, end)
-						)
-					));
-					this.resourceDefinitionLocations.set(key, locs);
+						const locs = this.resourceDefinitionLocations.get(key) || [];
+						locs.push(new vscode.Location(
+							fileUri,
+							new vscode.Range(
+								new vscode.Position(lineNumber, start),
+								new vscode.Position(lineNumber, end)
+							)
+						));
+						this.resourceDefinitionLocations.set(key, locs);
 
-					totalFound++;
+						totalFound++;
+					}
+					resourceCodeDetectRegex.lastIndex = 0;
 				}
-				regex.lastIndex = 0;
 			}
-
 			if (totalFound) {
 				Logger.info(`Found ${totalFound} key(s) in ${path.basename(fileUri.fsPath)}.`);
 				if (this.initialLoadDone) {
@@ -560,17 +576,22 @@ export default class SettingUtils implements vscode.Disposable {
 		return value;
 	}
 	static getResourceCodeMatch(str: string): RegExpExecArray | null {
-		const match = this._instance.codeRegex.exec(str);
-		this._instance.codeRegex.lastIndex = 0;
-		return match;
+		for (const regex of this._instance.codeRegex) {
+			const match = regex.exec(str);
+			regex.lastIndex = 0;
+			if (match) {
+				return match;
+			}
+		}
+		return null;
 	}
 	static getResourceLineMatch(str: string): RegExpExecArray | null {
 		const match = this._instance.resourceLineRegex.exec(str);
 		this._instance.resourceLineRegex.lastIndex = 0;
 		return match;
 	}
-	static getResourceCodeRegex(): RegExp {
-		return new RegExp(this._instance.codeRegex);
+	static getResourceCodeRegex(): RegExp[] {
+		return this._instance.codeRegex.map(r => new RegExp(r.source, r.flags));
 	}
 	static getResourceLineRegex(): RegExp {
 		return new RegExp(this._instance.resourceLineRegex);
@@ -597,15 +618,17 @@ export default class SettingUtils implements vscode.Disposable {
 		try {
 			const resourceKeys = new Set<string>();
 			const text = document.getText();
-			const resourceRegex = this.getResourceCodeRegex();
+			//OBSOLETE//const resourceCodeDetectRegex = this.getResourceCodeRegex();
 
-			let match;
-			while ((match = resourceRegex.exec(text)) !== null) {
-				if (match[0]) {
-					resourceKeys.add(match[0]);
+			// Loop over all the resource code detection regex's in the list
+			for (const resourceCodeDetectRegex of SettingUtils.getResourceCodeRegex()) {
+				let match;
+				while ((match = resourceCodeDetectRegex.exec(text)) !== null) {
+					if (match[0]) {
+						resourceKeys.add(match[0]);
+					}
 				}
 			}
-
 			return Array.from(resourceKeys);
 		} catch (error) {
 			Logger.error("ERROR in getAllResourceKeysFromDocument:", error);

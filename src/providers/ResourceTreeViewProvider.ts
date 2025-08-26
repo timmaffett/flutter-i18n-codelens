@@ -20,6 +20,7 @@ export class ResourceTreeView {
 			disposables.push(view);
 			// add supported languages to 'when' clause's context for the tree view
 			vscode.commands.executeCommand('setContext', 'i18TreeView.supportedLanguages', [
+				'dart',
 				'javascript',
 				'typescript',
 				'javascriptreact',
@@ -53,8 +54,17 @@ export class ResourceTreeView {
 							vscode.TextEditorSelectionChangeKind.Keyboard
 						].some(k => k == e.kind)) {
 						const selection = e.selections[0];
-						const keyRange = doc.getWordRangeAtPosition(selection.start, SettingUtils.getResourceCodeRegex());
-						const key = doc.getText(keyRange);
+						//OBSOLETE//const keyRange = doc.getWordRangeAtPosition(selection.start, SettingUtils.getResourceCodeRegex());
+
+            let keyRange: vscode.Range | undefined;
+            for (const regex of SettingUtils.getResourceCodeRegex()) {
+              keyRange = doc.getWordRangeAtPosition(selection.start, regex);
+              if (keyRange) {
+                break;
+              }
+            }
+
+						const key = keyRange && doc.getText(keyRange);
 						if (key) {
 							vscode.commands.executeCommand(actions.revealResource, key);
 						}
@@ -91,11 +101,11 @@ class ResourceTreeViewProvider implements vscode.TreeDataProvider<ResourceTreeIt
     vscode.window.onDidChangeActiveTextEditor((e) => {
       this.activeUri = e?.document?.uri;
       ResourceTreeViewProvider.resourceTreeItemList = [];
-      this._onDidChangeTreeData.fire();
+      this._onDidChangeTreeData.fire(ResourceTreeViewProvider.resourceTreeItemList[0]);
     }, null, disposables);
     SettingUtils.onDidChangeResourceLocations(() => {
       ResourceTreeViewProvider.resourceTreeItemList = [];
-      this._onDidChangeTreeData.fire();
+      this._onDidChangeTreeData.fire(ResourceTreeViewProvider.resourceTreeItemList[0]);
     }, null, disposables);
 
   }

@@ -122,38 +122,41 @@ export class DecoratorProvider implements vscode.Disposable {
 	updateDecorationForCode(textEditor: vscode.TextEditor) {
 		try {
 			const resources = SettingUtils.getResources();
-			const resourceRegex = SettingUtils.getResourceCodeRegex();
+			//const resourceCodeDetectRegex = SettingUtils.getResourceCodeRegex();
 
 			const text = textEditor.document.getText();
 
 			const successResources: vscode.DecorationOptions[] = [];
 			const errorResources: vscode.DecorationOptions[] = [];
 			const warnResources: vscode.DecorationOptions[] = [];
-			let match;
-			while ((match = resourceRegex.exec(text))) {
-				const startPos = textEditor.document.positionAt(match.index);
-				const endPos = textEditor.document.positionAt(match.index + match[0].length);
-				const range = new vscode.Range(startPos, endPos);
-				const word = textEditor.document.getText(range);
-				const decoration = { range };
 
-				let matchCount = 0;
-				resources.forEach((item) => {
-					if (item.keyValuePairs[word]) {
-						matchCount++;
+			// Loop over all the resource code detection regex's in the list
+			for (const resourceCodeDetectRegex of SettingUtils.getResourceCodeRegex()) {
+				let match;
+				while ((match = resourceCodeDetectRegex.exec(text))) {
+					const startPos = textEditor.document.positionAt(match.index);
+					const endPos = textEditor.document.positionAt(match.index + match[0].length);
+					const range = new vscode.Range(startPos, endPos);
+					const word = textEditor.document.getText(range);
+					const decoration = { range };
+
+					let matchCount = 0;
+					resources.forEach((item) => {
+						if (item.keyValuePairs[word]) {
+							matchCount++;
+						}
+					});
+					const isAllResourcesExist = matchCount == resources.length;
+					if (isAllResourcesExist) {
+						successResources.push(decoration);
+					} else if (matchCount > 0) {
+						warnResources.push(decoration);
 					}
-				});
-				const isAllResourcesExist = matchCount == resources.length;
-				if (isAllResourcesExist) {
-					successResources.push(decoration);
-				} else if (matchCount > 0) {
-					warnResources.push(decoration);
-				}
-				else {
-					errorResources.push(decoration);
+					else {
+						errorResources.push(decoration);
+					}
 				}
 			}
-
 			textEditor.setDecorations(this.resourceExistDecorationType, successResources);
 			textEditor.setDecorations(this.resourceNotFoundDecorationType, errorResources);
 			textEditor.setDecorations(this.resourceWarnDecorationType, warnResources);

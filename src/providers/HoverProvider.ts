@@ -14,15 +14,26 @@ export class HoverProvider implements vscode.HoverProvider {
 			let keyRange;
 			if (SettingUtils.isResourceFilePath(document.uri.fsPath)) {
 				keyRange = document.getWordRangeAtPosition(position, SettingUtils.getResourceLineRegex());
+				const key = keyRange && document.getText(keyRange);
+				if (!key) return;
+
+				return this.buildHover(key);
 			} else {
-				keyRange = document.getWordRangeAtPosition(position, SettingUtils.getResourceCodeRegex());
+				//OBSOLETE//keyRange = document.getWordRangeAtPosition(position, SettingUtils.getResourceCodeRegex());
+
+				let keyRange: vscode.Range | undefined;
+				for (const regex of SettingUtils.getResourceCodeRegex()) {
+					keyRange = document.getWordRangeAtPosition(position, regex);
+					if (keyRange) {
+						break;
+					}
+				}
+				const key = keyRange && document.getText(keyRange);
+				if (!key) return;
+				return this.buildHover(key);
 			}
 
 
-			const key = keyRange && document.getText(keyRange);
-			if (!key) return;
-
-			return this.buildHover(key);
 		} catch (err) {
 			Logger.error('ERROR in provideHover:', err);
 		}

@@ -1,4 +1,4 @@
-export const extensionName = "i18n-codelens";
+export const extensionName = "flutter-i18n-codelens";
 
 export const settings = {
 	codeLens: "codeLens",
@@ -6,7 +6,7 @@ export const settings = {
 	underlineDecorator: "underlineCodeDecorator",
 	autoFocus: "autoFocusAfterModified",
 	globPattern: "resourceFilesGlobPattern",
-	resourceRegex: "resourceCodeDetectionRegex",
+	resourceCodeDetectRegex: "resourceCodeDetectionRegex",
 	revealTreeView: "revealResourceInTreeView",
 	codeFileRegex: "codeFileRegex",
 	logLevel: "logLevel",

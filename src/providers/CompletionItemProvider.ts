@@ -7,17 +7,24 @@ export default class CompletionItemProvider implements vscode.CompletionItemProv
 
 
 	provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
-
-
 		const resources = SettingUtils.getResources();
-		const resourceRegex = SettingUtils.getResourceCodeRegex();
+		//OBSOLETE//const resourceCodeDetectRegex = SettingUtils.getResourceCodeRegex();
 
-		const range = document.getWordRangeAtPosition(position, resourceRegex);
-		const translationKeyMatch = document.getText(range);
+		// Loop over all the resource code detection regex's in the list
+		let translationKeyMatch: string | undefined  = undefined;
+		let range: vscode.Range | undefined;
+		for (const resourceCodeDetectRegex of SettingUtils.getResourceCodeRegex()) {
+			const range = document.getWordRangeAtPosition(position, resourceCodeDetectRegex);
+			if(range) {
+				translationKeyMatch = document.getText(range);
+				if (!translationKeyMatch) {
+					continue;
+				}
+			}
+		}
 		if (!translationKeyMatch) {
 			return undefined;
 		}
-
 		const resourceList: { key: string, value: { [key: string]: string } }[] = [];
 
 		for (const resource of resources) {

@@ -9,7 +9,7 @@ It can be made to work in various projects by changing the regex information and
 - **🔍 Smart Translation Detection**: Automatically detects translation keys in your code using configurable regex patterns
 - **📋 Bulk Translation Editor**: Professional WebView-based interface for editing multiple translation keys simultaneously
 - **🎯 Interactive Hover Actions**: Click-to-edit, add, or delete translations directly from hover popups
-- **🌐 Multi-Language Support**: Works with JavaScript, TypeScript, React (JSX/TSX) files
+- **🌐 Multi-Language Support**: Works with Dart JavaScript, TypeScript, React (JSX/TSX) files
 - **📊 Visual Indicators**: Color-coded decorations showing translation status (missing, partial, complete)
 - **🔄 Real-time Validation**: Instant feedback on missing translations with CodeLens integration
 - **🗂️ Resource Tree View**: Organized view of all translation keys with quick navigation
@@ -42,6 +42,7 @@ It can be made to work in various projects by changing the regex information and
 - **JSON-Safe Operations**: Prevents trailing comma corruption during file modifications
 - **Enhanced Error Handling**: Comprehensive error reporting with detailed logging
 - **Better Performance**: Optimized resource monitoring and change detection
+- **Extended Language Support**: Full Flutter (DART) compatibility
 - **Extended Language Support**: Full React (JSX/TSX) compatibility
 
 ## Change Log
@@ -68,6 +69,7 @@ It can be made to work in various projects by changing the regex information and
 - **Improved**: JSON-safe file operations preventing trailing comma corruption
 - **Added**: Source file tracking for bulk edit operations
 - **Enhanced**: Error handling and logging throughout the extension
+- **Extended**: Language support for Dart files (DART)
 - **Extended**: Language support for React files (JSX/TSX)
 - **Fixed**: WebView modal restrictions with custom confirmation dialogs
 - **Improved**: Resource tree view performance and reliability
@@ -128,7 +130,7 @@ Performance tweaks & refactored with new features
 - Regular expression pattern to identify resource keys for hover information and CodeLenses. The default pattern matches: `t('key')`, `T('key')`, or keys preceded by `/** @i18n */` comment. Default: `(?<=\/\*\*\s*?@i18n\s*?\*\/\s*?["']|\W[tT]\(\s*["'])(?<key>[A-Za-z0-9 .-]+?)(?=["'])`
 
 ### `codeFileRegex`
-- Regular expression pattern to identify code files for translation keys. Default: `/\.(jsx?|tsx?)$/`
+- Regular expression pattern to identify code files for translation keys. Default: `/\.(dart?|jsx?|tsx?)$/`
 
 #### `logLevel`
 - Controls the log level of the i18n CodeLens extension. Set to 'debug' for more verbose logs. Default: `warn`
@@ -158,7 +160,7 @@ T('user.name')                 // Uppercase function pattern
 
 ## 🤝 Contributing
 
-Issues and feature requests are welcome! Please check the [GitHub repository](https://github.com/hepter/i18n-codelens) for more information.
+Issues and feature requests are welcome! Please check the [GitHub repository](https://github.com/hepter/flutter-i18n-codelens) for more information.
 
 ## 📄 License
 

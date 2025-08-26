@@ -1,12 +1,12 @@
 {
-    "name": "i18n-codelens",
+    "name": "flutter-i18n-codelens",
     "displayName": "i18n CodeLens",
-    "description": "Advanced i18n CodeLens with bulk translation editing, interactive hover actions, and comprehensive language resource management for JavaScript, TypeScript, and React projects.",
+    "description": "Advanced i18n CodeLens with bulk translation editing, interactive hover actions, and comprehensive language resource management for Flutter/Dart projects.",
     "version": "1.1.1",
-    "publisher": "mustafa-kuru",
+    "publisher": "HiveRight",
     "author": {
-        "email": "mustafakuru042@gmail.com",
-        "name": "Mustafa Kuru"
+        "email": "timmaffett@gmail.com",
+        "name": "Tim Maffett"
     },
     "private": true,
     "icon": "images/logo.png",
@@ -18,9 +18,10 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/hepter/i18n-codelens"
+        "url": "https://github.com/timmaffett/flutter-flutter-i18n-codelens"
     },
     "activationEvents": [
+        "onLanguage:dart",
         "onLanguage:typescript",
         "onLanguage:typescriptreact",
         "onLanguage:javascript",
@@ -34,72 +35,88 @@
                 {
                     "id": "i18nResourceDefinitions",
                     "name": "i18n Resource Definitions",
-                    "when": "config.i18n-codelens.resourceTreeViewVisible && resourceLangId in i18TreeView.supportedLanguages"
+                    "when": "config.flutter-i18n-codelens.resourceTreeViewVisible && resourceLangId in i18TreeView.supportedLanguages"
                 }
             ]
         },
         "commands": [
             {
                 "title": "Enable CodeLens",
-                "command": "i18n-codelens.enableCodeLensAction",
+                "command": "flutter-i18n-codelens.enableCodeLensAction",
                 "category": "i18n CodeLens"
             },
             {
                 "title": "Disable Codelens",
-                "command": "i18n-codelens.disableCodeLensAction",
+                "command": "flutter-i18n-codelens.disableCodeLensAction",
                 "category": "i18n CodeLens"
             },
             {
                 "title": "Reset cache and reload",
-                "command": "i18n-codelens.resetAndReloadExtensionAction",
+                "command": "flutter-i18n-codelens.resetAndReloadExtensionAction",
                 "category": "i18n CodeLens"
             }
         ],
         "configuration": {
             "properties": {
-                "i18n-codelens.codeLens": {
+                "flutter-i18n-codelens.codeLens": {
                     "type": "boolean",
                     "default": true,
                     "description": "Enable or disable the CodeLens for missing resource code."
                 },
-                "i18n-codelens.resourceAutoSave": {
+                "flutter-i18n-codelens.resourceAutoSave": {
                     "type": "boolean",
                     "default": true,
                     "description": "Enable auto save for resource file(s) that saves files after inserted or updated resource data."
                 },
-                "i18n-codelens.underlineCodeDecorator": {
+                "flutter-i18n-codelens.underlineCodeDecorator": {
                     "type": "boolean",
                     "default": true,
                     "description": "Enable or disable the underline decorator for missing resource code(s)."
                 },
-                "i18n-codelens.autoFocusAfterModified": {
+                "flutter-i18n-codelens.autoFocusAfterModified": {
                     "type": "boolean",
-                    "default": false,
+                    "default": true,
                     "description": "Enable auto focus document after inserted or updated target resource file(s)."
                 },
-                "i18n-codelens.revealResourceInTreeView": {
+                "flutter-i18n-codelens.revealResourceInTreeView": {
                     "type": "boolean",
-                    "default": false,
+                    "default": true,
                     "description": "Enable or disable the automatic reveal resource item in the Resource Tree View when selected resource file on the editor."
                 },
-                "i18n-codelens.resourceTreeViewVisible": {
+                "flutter-i18n-codelens.resourceTreeViewVisible": {
                     "type": "boolean",
                     "default": true,
                     "description": "Enable or disable the Resource Tree View"
                 },
-                "i18n-codelens.resourceFilesGlobPattern": {
+                "flutter-i18n-codelens.resourceFilesGlobPattern": {
                     "type": "string",
-                    "description": "Language file glob patterns. (Language resource files must be key value object files.)",
+                    "description": "Where to find the language JSON files. Language file glob patterns. (Language resource files must be key value object files.)",
                     "editPresentation": "singlelineText",
                     "default": "**/locales/**/*.json"
                 },
-                "i18n-codelens.resourceCodeDetectionRegex": {
+                "flutter-i18n-codelens.resourceFilesGlobPattern": {
                     "type": "string",
-                    "description": "Regular expression pattern to identify resource keys for hover information and CodeLenses. The default pattern matches: t('key'), T('key'), or keys preceded by /** @i18n */ comment.",
+                    "description": "Where to find the language JSON files. Language file glob patterns. (Language resource files must be key value object files.)",
                     "editPresentation": "singlelineText",
-                    "default": "(?<=\\/\\*\\*\\s*?@i18n\\s*?\\*\\/\\s*?[\"']|\\W[tT]\\(\\s*[\"'])(?<key>[A-Za-z0-9 .-]+?)(?=[\"'])"
+                    "default": "**/locales/**/*.json"
                 },
-                "i18n-codelens.logLevel": {
+                "flutter-i18n-codelens.codeFileRegex": {
+                    "type": "string",
+                    "description": "Regular expression pattern to identify code files for scanning. The default pattern matches: .dart,.jsx,.tsx.",
+                    "editPresentation": "singlelineText",
+                    "default": "\\.(dart?|jsx?|tsx?)$"
+                },
+                "flutter-i18n-codelens.resourceCodeDetectionRegex": {
+                    "type": "[string]",
+                    "description": "Regular expression pattern to identify resource keys for hover information and CodeLenses. The default pattern matches: t('key'), T('key'), or keys preceded by /** @i18n */ comment.",
+                    "SeditPresentation": "singlelineText",
+                    "default": [
+                        "\\b[Tt][Rr]\\s*\\(\\s*[\"'](?<key>[À-ÖØ-öø-ÿA-Za-z0-9{}!\\\\#$%^&*()\\-_=+;:/?.>,<`~ .-]+?)[\"']",
+                        "(?<=[\"'])(?<key>[À-ÖØ-öø-ÿA-Za-z0-9{}!\\\\#$%^&*()\\-_=+;:/?.>,<`~ .-]+?)(?=[\"']\\.i18n)",
+                        "(?<=[\"'])(?<key>[À-ÖØ-öø-ÿA-Za-z0-9{}!\\\\#$%^&*()\\-_=+;:/?.>,<`~ .-]+?)(?=[\"']\\.tr)"
+                    ]
+                },
+                "flutter-i18n-codelens.logLevel": {
                     "type": "string",
                     "enum": [
                         "debug",
@@ -129,7 +146,7 @@
         "@typescript-eslint/eslint-plugin": "^4.16.0",
         "@typescript-eslint/parser": "^4.16.0",
         "eslint": "^7.21.0",
-        "typescript": "^4.4.3",
+        "typescript": "^4.9.5",
         "vsce": "^2.5.1"
     },
     "dependencies": {

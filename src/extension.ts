@@ -34,11 +34,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
                 // Register providers
                 id.push(new DecoratorProvider());
-                id.push(vscode.languages.registerCodeLensProvider(['javascript', 'typescript', 'javascriptreact', 'typescriptreact'], new CodelensProvider(id)));
-                id.push(vscode.languages.registerCompletionItemProvider(['javascript', 'typescript', 'javascriptreact', 'typescriptreact'], new CompletionItemProvider(), ''));
-                id.push(vscode.languages.registerDefinitionProvider(['javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'json'], new DefinitionProvider()));
-                id.push(vscode.languages.registerHoverProvider(['javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'json'], new HoverProvider()));
-                id.push(vscode.languages.registerCodeActionsProvider(['javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'json'], new ResourceEditCodeAction()));
+                id.push(vscode.languages.registerCodeLensProvider(['dart','javascript', 'typescript', 'javascriptreact', 'typescriptreact'], new CodelensProvider(id)));
+                id.push(vscode.languages.registerCompletionItemProvider(['dart','javascript', 'typescript', 'javascriptreact', 'typescriptreact'], new CompletionItemProvider(), ''));
+                id.push(vscode.languages.registerDefinitionProvider(['dart','javascript', 'typescript', 'javascriptreact', 'typescriptreact'], new DefinitionProvider()));
+                id.push(vscode.languages.registerHoverProvider(['dart','javascript', 'typescript', 'javascriptreact', 'typescriptreact'], new HoverProvider()));
+                id.push(vscode.languages.registerCodeActionsProvider(['dart','javascript', 'typescript', 'javascriptreact', 'typescriptreact'], new ResourceEditCodeAction()));
 
 				// Register commands
 				id.push(vscode.commands.registerCommand(actions.enableCodeLens, ActionEnableDisableCodeLens(true)));
